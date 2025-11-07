@@ -1,6 +1,7 @@
 from ebooklib import epub
 import markdown
-from typing import Optional
+from typing import Optional, List
+from bs4 import BeautifulSoup
 from ..models.book import Book
 from ..schemas.book import ExportOptions
 from .typographer import apply_polish_typography
@@ -65,13 +66,42 @@ class EPUBBuilder:
             epub_book.add_item(copyright_page)
             spine_items.append(copyright_page)
 
-        # Add chapters
-        chapters_list = []
+        # Add chapters with hierarchical TOC support
+        toc_structure = []
         sorted_chapters = sorted(book.chapters, key=lambda c: c.position)
 
         for i, chapter in enumerate(sorted_chapters):
             # Convert Markdown to HTML
             html_content = self._markdown_to_html(chapter.content)
+
+            # Extract headings for hierarchical TOC and add IDs
+            soup = BeautifulSoup(html_content, 'html.parser')
+            subsections = []
+
+            for heading in soup.find_all(['h2', 'h3']):
+                text = heading.get_text().strip()
+                # Create ID if not present
+                if not heading.get('id'):
+                    heading_id = f"chapter-{i+1}-{text.lower().replace(' ', '-')[:50]}"
+                    heading['id'] = heading_id
+                else:
+                    heading_id = heading['id']
+
+                if heading.name == 'h2':
+                    subsections.append({
+                        'level': 'h2',
+                        'text': text,
+                        'id': heading_id
+                    })
+                elif heading.name == 'h3':
+                    subsections.append({
+                        'level': 'h3',
+                        'text': text,
+                        'id': heading_id
+                    })
+
+            # Update HTML content with IDs
+            html_content = str(soup)
 
             # Create chapter title
             chapter_title = chapter.title
@@ -86,12 +116,31 @@ class EPUBBuilder:
             )
 
             epub_book.add_item(epub_chapter)
-            chapters_list.append(epub_chapter)
             spine_items.append(epub_chapter)
+
+            # Build TOC entry (chapter with potential subsections)
+            if options.include_toc and subsections:
+                # Create sub-entries for H2 headings
+                toc_subsections = []
+                for subsection in subsections:
+                    if subsection['level'] == 'h2':
+                        toc_subsections.append(
+                            epub.Link(
+                                f"chapter_{i+1}.xhtml#{subsection['id']}",
+                                subsection['text'],
+                                f"chapter_{i+1}_{subsection['id']}"
+                            )
+                        )
+
+                # Chapter with subsections
+                toc_structure.append((epub.Section(chapter_title), [epub_chapter] + toc_subsections))
+            else:
+                # Simple chapter entry
+                toc_structure.append(epub_chapter)
 
         # Build TOC
         if options.include_toc:
-            epub_book.toc = tuple(chapters_list)
+            epub_book.toc = tuple(toc_structure) if toc_structure else ()
             epub_book.add_item(epub.EpubNcx())
             epub_book.add_item(epub.EpubNav())
 
@@ -139,9 +188,41 @@ class EPUBBuilder:
         return title_page
 
     def _create_copyright_page(self, book: Book) -> epub.EpubHtml:
-        """Create copyright page"""
+        """Create comprehensive copyright page with full metadata"""
         from datetime import datetime
         year = datetime.now().year
+
+        # Build copyright information
+        copyright_info = []
+
+        # Main copyright notice
+        copyright_info.append(f'<p class="copyright-notice">© {year} {book.author}</p>')
+        copyright_info.append('<p class="rights-statement">All rights reserved.</p>')
+
+        # Publisher information
+        if book.publisher:
+            copyright_info.append(f'<p class="publisher-info">Published by {book.publisher}</p>')
+        else:
+            copyright_info.append('<p class="publisher-info">Self-published</p>')
+
+        # Edition information
+        copyright_info.append(f'<p class="edition-info">First edition, {year}</p>')
+
+        # ISBN if available
+        if book.isbn:
+            copyright_info.append(f'<p class="isbn">ISBN: {book.isbn}</p>')
+
+        # Legal notice
+        copyright_info.append('''
+            <p class="legal-notice">
+                No part of this publication may be reproduced, stored in a retrieval system,
+                or transmitted in any form or by any means, electronic, mechanical, photocopying,
+                recording, or otherwise, without the prior written permission of the copyright owner.
+            </p>
+        ''')
+
+        # Created with notice
+        copyright_info.append('<p class="created-with">Created with Book Composer</p>')
 
         content = f"""
         <?xml version='1.0' encoding='utf-8'?>
@@ -153,10 +234,7 @@ class EPUBBuilder:
         </head>
         <body>
             <div class="copyright-page">
-                <p>© {year} {book.author}</p>
-                <p>All rights reserved.</p>
-                {f'<p>Publisher: {book.publisher}</p>' if book.publisher else ''}
-                {f'<p>ISBN: {book.isbn}</p>' if book.isbn else ''}
+                {''.join(copyright_info)}
             </div>
         </body>
         </html>
@@ -177,7 +255,7 @@ class EPUBBuilder:
         filename: str,
         content: str
     ) -> epub.EpubHtml:
-        """Create a chapter"""
+        """Create a chapter with semantic HTML5 structure"""
         html_content = f"""
         <?xml version='1.0' encoding='utf-8'?>
         <!DOCTYPE html>
@@ -187,10 +265,14 @@ class EPUBBuilder:
             <link href="style/nav.css" rel="stylesheet" type="text/css"/>
         </head>
         <body>
-            <div class="chapter">
-                <h1>{title}</h1>
-                {content}
-            </div>
+            <article class="chapter">
+                <header class="chapter-header">
+                    <h1 class="chapter-title">{title}</h1>
+                </header>
+                <section class="chapter-content">
+                    {content}
+                </section>
+            </article>
         </body>
         </html>
         """
@@ -251,17 +333,35 @@ hr + p, figure + p {
 }
 
 /* First paragraph of chapter */
-.chapter > p:first-of-type {
+.chapter-content > p:first-of-type {
     text-indent: 0;
 }
 
+/* === SEMANTIC STRUCTURE === */
+.chapter {
+    /* Article element for semantic HTML5 */
+}
+
+.chapter-header {
+    margin-bottom: 2em;
+}
+
+.chapter-title {
+    /* H1 styling below applies */
+}
+
+.chapter-content {
+    /* Main chapter content container */
+}
+
 /* === DROP CAPS === */
-.chapter > p:first-of-type::first-letter {
+.chapter-content > p:first-of-type::first-letter {
     font-size: 3.5em;
     line-height: 0.9;
     float: left;
     margin: 0.1em 0.1em 0 0;
     font-weight: bold;
+    color: #2a2a2a;
 }
 
 /* === HEADINGS === */
