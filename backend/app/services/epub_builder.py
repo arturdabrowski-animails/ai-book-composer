@@ -3,6 +3,7 @@ import markdown
 from typing import Optional
 from ..models.book import Book
 from ..schemas.book import ExportOptions
+from .typographer import apply_polish_typography
 
 
 class EPUBBuilder:
@@ -100,11 +101,13 @@ class EPUBBuilder:
         return epub_book
 
     def _markdown_to_html(self, markdown_text: str) -> str:
-        """Convert Markdown to HTML"""
-        return markdown.markdown(
+        """Convert Markdown to HTML with Polish typography"""
+        html = markdown.markdown(
             markdown_text,
             extensions=['extra', 'codehilite', 'tables']
         )
+        # Apply professional Polish typography
+        return apply_polish_typography(html)
 
     def _create_title_page(self, book: Book) -> epub.EpubHtml:
         """Create title page"""
@@ -202,103 +205,359 @@ class EPUBBuilder:
         return chapter
 
     def _get_default_css(self) -> str:
-        """Get default CSS for EPUB"""
+        """Professional publishing CSS for EPUB"""
         return """
-        body {
-            font-family: Georgia, serif;
-            font-size: 1.1em;
-            line-height: 1.6;
-            text-align: justify;
-            margin: 1em;
-        }
+/* =====================================================
+   BOOK COMPOSER - Professional Publishing CSS
+   Publication-quality EPUB typography
+   ===================================================== */
 
-        .title-page {
-            text-align: center;
-            margin-top: 30%;
-        }
+/* === FONTS === */
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
 
-        .book-title {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 0.3em;
-        }
+/* === BASE === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        .subtitle {
-            font-size: 1.5em;
-            color: #666;
-            margin-bottom: 1.5em;
-        }
+body {
+    font-family: 'Libre Baskerville', 'Georgia', 'Palatino', serif;
+    font-size: 1em;
+    line-height: 1.7;
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    hyphenate-limit-chars: 6 3 2;
+    color: #1a1a1a;
+    padding: 1.5em;
+    max-width: 40em;
+    margin: 0 auto;
+}
 
-        .author {
-            font-size: 1.2em;
-            font-style: italic;
-        }
+/* === PARAGRAPHS === */
+p {
+    text-indent: 1.5em;
+    margin: 0;
+}
 
-        .copyright-page {
-            margin-top: 50%;
-            font-size: 0.9em;
-            color: #666;
-        }
+/* No indent after headings, lists, blockquotes */
+h1 + p, h2 + p, h3 + p, h4 + p,
+ul + p, ol + p, blockquote + p,
+hr + p, figure + p {
+    text-indent: 0;
+}
 
-        .chapter {
-            margin: 2em 0;
-        }
+/* First paragraph of chapter */
+.chapter > p:first-of-type {
+    text-indent: 0;
+}
 
-        .chapter h1 {
-            font-size: 2em;
-            margin-bottom: 1em;
-            page-break-after: avoid;
-        }
+/* === DROP CAPS === */
+.chapter > p:first-of-type::first-letter {
+    font-size: 3.5em;
+    line-height: 0.9;
+    float: left;
+    margin: 0.1em 0.1em 0 0;
+    font-weight: bold;
+}
 
-        h2 {
-            font-size: 1.5em;
-            margin: 1.5em 0 0.8em 0;
-            page-break-after: avoid;
-        }
+/* === HEADINGS === */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 700;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+    color: #1a1a1a;
+    text-align: left;
+}
 
-        h3 {
-            font-size: 1.2em;
-            margin: 1.2em 0 0.6em 0;
-            page-break-after: avoid;
-        }
+h1 {
+    font-size: 2.5em;
+    margin: 2em 0 1.5em 0;
+    page-break-before: always;
+    text-align: center;
+    font-variant: small-caps;
+    letter-spacing: 0.05em;
+}
 
-        p {
-            margin: 0 0 0.8em 0;
-            text-indent: 1.5em;
-        }
+h2 {
+    font-size: 1.75em;
+    margin: 1.5em 0 1em 0;
+}
 
-        p:first-of-type,
-        h1 + p,
-        h2 + p,
-        h3 + p {
-            text-indent: 0;
-        }
+h3 {
+    font-size: 1.35em;
+    margin: 1.25em 0 0.75em 0;
+}
 
-        blockquote {
-            margin: 1.5em 2em;
-            padding: 0.5em 1em;
-            border-left: 3px solid #ccc;
-            font-style: italic;
-            background: #f9f9f9;
-        }
+h4 {
+    font-size: 1.15em;
+    margin: 1em 0 0.5em 0;
+}
 
-        ul, ol {
-            margin: 1em 0 1em 2em;
-        }
+/* === CHAPTER NUMBERS === */
+.chapter-number {
+    display: block;
+    font-size: 0.6em;
+    font-weight: normal;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.5em;
+    text-transform: uppercase;
+    color: #666;
+}
 
-        li {
-            margin: 0.5em 0;
-        }
+/* === LISTS === */
+ul, ol {
+    margin: 1.25em 0;
+    padding-left: 2.5em;
+}
 
-        code {
-            font-family: 'Courier New', monospace;
-            background: #f5f5f5;
-            padding: 0.1em 0.3em;
-        }
+li {
+    margin: 0.5em 0;
+    line-height: 1.6;
+}
 
-        pre {
-            background: #f5f5f5;
-            padding: 1em;
-            overflow-x: auto;
-        }
+ul {
+    list-style-type: disc;
+}
+
+ul ul {
+    list-style-type: circle;
+    margin: 0.5em 0;
+}
+
+ol {
+    list-style-type: decimal;
+}
+
+ol ol {
+    list-style-type: lower-alpha;
+}
+
+/* === QUOTES === */
+blockquote {
+    margin: 1.75em 2.5em;
+    padding: 1em 1.25em;
+    font-style: italic;
+    border-left: 3px solid #c0c0c0;
+    background: linear-gradient(to right, #f8f8f8 0%, #ffffff 100%);
+    page-break-inside: avoid;
+}
+
+blockquote p {
+    text-indent: 0 !important;
+    margin-bottom: 0.75em;
+}
+
+blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+cite {
+    display: block;
+    text-align: right;
+    font-style: normal;
+    font-size: 0.9em;
+    margin-top: 0.75em;
+    color: #555;
+}
+
+cite::before {
+    content: "— ";
+}
+
+/* === SCENE BREAKS === */
+hr {
+    border: none;
+    text-align: center;
+    margin: 2.5em 0;
+    height: 1.5em;
+    position: relative;
+}
+
+hr::before {
+    content: "* * *";
+    font-size: 1.2em;
+    letter-spacing: 1.5em;
+    color: #888;
+}
+
+/* === EMPHASIS === */
+strong {
+    font-weight: 700;
+}
+
+em {
+    font-style: italic;
+}
+
+/* === CODE === */
+code {
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 0.9em;
+    background: #f5f5f5;
+    padding: 0.1em 0.3em;
+    border-radius: 2px;
+}
+
+pre {
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 0.85em;
+    background: #f5f5f5;
+    padding: 1em;
+    overflow-x: auto;
+    border-left: 3px solid #ccc;
+    margin: 1.5em 0;
+    page-break-inside: avoid;
+}
+
+pre code {
+    background: none;
+    padding: 0;
+}
+
+/* === IMAGES === */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 2em auto;
+}
+
+figure {
+    margin: 2em 0;
+    text-align: center;
+    page-break-inside: avoid;
+}
+
+figcaption {
+    font-size: 0.9em;
+    font-style: italic;
+    color: #666;
+    margin-top: 0.75em;
+    text-align: center;
+}
+
+/* === LINKS === */
+a {
+    color: #1a1a1a;
+    text-decoration: underline;
+}
+
+a:hover {
+    color: #555;
+}
+
+/* === TABLES === */
+table {
+    border-collapse: collapse;
+    margin: 1.5em auto;
+    width: 100%;
+    page-break-inside: avoid;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 0.75em;
+    text-align: left;
+}
+
+th {
+    background: #f5f5f5;
+    font-weight: 700;
+}
+
+/* === FRONT MATTER === */
+.title-page {
+    text-align: center;
+    page-break-after: always;
+    margin-top: 30vh;
+}
+
+.title-page h1 {
+    font-size: 3em;
+    margin-bottom: 0.5em;
+    font-variant: normal;
+    letter-spacing: 0.02em;
+}
+
+.title-page .subtitle {
+    font-size: 1.5em;
+    font-weight: normal;
+    font-style: italic;
+    color: #555;
+    margin-bottom: 2em;
+}
+
+.title-page .author {
+    font-size: 1.25em;
+    font-variant: small-caps;
+    letter-spacing: 0.1em;
+}
+
+.copyright-page {
+    page-break-after: always;
+    font-size: 0.85em;
+    color: #555;
+    margin-top: 50vh;
+}
+
+.copyright-page p {
+    text-indent: 0 !important;
+    margin: 0.5em 0;
+    text-align: left;
+}
+
+.dedication {
+    text-align: center;
+    font-style: italic;
+    page-break-after: always;
+    margin-top: 30vh;
+}
+
+.dedication p {
+    text-indent: 0 !important;
+    font-size: 1.1em;
+}
+
+/* === SPECIAL BOXES === */
+.tip-box, .warning-box, .info-box {
+    margin: 1.75em 0;
+    padding: 1.25em;
+    border-radius: 4px;
+    page-break-inside: avoid;
+    border-left: 4px solid;
+    background: #fafafa;
+}
+
+.tip-box {
+    border-left-color: #4caf50;
+    background: linear-gradient(to right, #e8f5e9 0%, #ffffff 100%);
+}
+
+.warning-box {
+    border-left-color: #ff9800;
+    background: linear-gradient(to right, #fff3e0 0%, #ffffff 100%);
+}
+
+.info-box {
+    border-left-color: #2196f3;
+    background: linear-gradient(to right, #e3f2fd 0%, #ffffff 100%);
+}
+
+.tip-box p, .warning-box p, .info-box p {
+    text-indent: 0 !important;
+}
+
+/* === PAGE BREAKS === */
+.page-break {
+    page-break-after: always;
+}
+
+.avoid-break {
+    page-break-inside: avoid;
+}
         """
