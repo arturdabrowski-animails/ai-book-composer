@@ -1,11 +1,13 @@
-import ReactMarkdown from 'react-markdown'
+import BookPreview from './BookPreview'
+import { useBookStore } from '../stores/bookStore'
 
 export default function PreviewPane({ content }) {
+  const { currentBook } = useBookStore()
+
   return (
-    <div className="h-full overflow-y-auto bg-white p-8">
-      <div className="max-w-3xl mx-auto prose prose-sm sm:prose lg:prose-lg">
-        <ReactMarkdown>{content || '*No content to preview*'}</ReactMarkdown>
-      </div>
-    </div>
+    <BookPreview
+      content={content}
+      bookTitle={currentBook?.title || 'Untitled'}
+    />
   )
 }
