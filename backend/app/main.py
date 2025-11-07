@@ -33,7 +33,9 @@ async def root():
     """Root endpoint"""
     return {
         "message": "Book Composer API",
-        "version": "1.0.0",
+        "version": "2.0.1",
+        "build_date": "2025-11-07T11:30:00Z",
+        "phase": "Phase 2: Import/Export (PDF temporarily disabled)",
         "docs": "/docs"
     }
 
@@ -42,3 +44,17 @@ async def root():
 async def health():
     """Health check endpoint"""
     return {"status": "healthy"}
+
+
+@app.get("/api/version")
+async def version():
+    """Version endpoint for frontend to check"""
+    return {
+        "version": "2.0.1",
+        "build_date": "2025-11-07T11:30:00Z",
+        "features": {
+            "epub_import": True,
+            "epub_export": True,
+            "pdf_export": False  # Temporarily disabled
+        }
+    }
