@@ -1,9 +1,15 @@
-from weasyprint import HTML, CSS
 from typing import Optional
 import markdown
 from datetime import datetime
 from ..models.book import Book
 from ..schemas.book import ExportOptions
+
+# Try to import WeasyPrint - it requires system dependencies
+try:
+    from weasyprint import HTML, CSS
+    WEASYPRINT_AVAILABLE = True
+except ImportError:
+    WEASYPRINT_AVAILABLE = False
 
 
 class PDFExporter:
@@ -15,6 +21,14 @@ class PDFExporter:
 
         Returns: PDF as bytes
         """
+        if not WEASYPRINT_AVAILABLE:
+            raise ImportError(
+                "PDF export is temporarily unavailable. "
+                "WeasyPrint requires system dependencies (libpango, libcairo) "
+                "that are not installed on this server. "
+                "Please use EPUB export instead."
+            )
+
         if options is None:
             options = ExportOptions()
 
