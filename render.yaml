@@ -1,11 +1,13 @@
 services:
   # Backend API
   - type: web
-    name: aibookcomposer
+    name: aibookcomposer-backend
     runtime: python
     rootDir: backend
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -15,17 +17,20 @@ services:
         generateValue: true
       - key: PYTHON_VERSION
         value: "3.11"
+      - key: DEBUG
+        value: "false"
 
   # Frontend Static Site
   - type: web
     name: aibookcomposer-frontend
     runtime: static
+    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        value: https://aibookcomposer.onrender.com
+        value: https://aibookcomposer-backend.onrender.com
     routes:
       - type: rewrite
         source: /*
