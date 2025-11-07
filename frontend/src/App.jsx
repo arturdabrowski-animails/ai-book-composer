@@ -6,7 +6,7 @@ import { getApiUrl } from './config'
 
 function App() {
   // Authentication disabled for development
-  const buildDate = new Date('2025-11-07T11:30:00Z').toLocaleString('pl-PL')
+  const buildDate = new Date('2025-11-07T12:00:00Z').toLocaleString('pl-PL')
   const [apiVersion, setApiVersion] = useState('checking...')
 
   useEffect(() => {
