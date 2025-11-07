@@ -97,9 +97,11 @@ async def get_current_user_dev(
 
     # Create dev user if doesn't exist
     if user is None:
+        # Use a dummy hash for dev user (bcrypt has compatibility issues)
+        # This is safe because dev mode bypasses authentication anyway
         user = User(
             email="dev@bookcomposer.local",
-            password_hash=get_password_hash("dev123")
+            password_hash="$2b$12$dummy.hash.for.development.user.only"
         )
         db.add(user)
         await db.commit()
