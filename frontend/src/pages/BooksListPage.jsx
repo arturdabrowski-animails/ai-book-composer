@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../stores/authStore'
 import { useBookStore } from '../stores/bookStore'
-import { BookOpen, Plus, LogOut, Trash2 } from 'lucide-react'
+import { BookOpen, Plus, Trash2 } from 'lucide-react'
 
 export default function BooksListPage() {
   const navigate = useNavigate()
-  const { logout, user } = useAuthStore()
   const { books, loadBooks, createBook, deleteBook, loading } = useBookStore()
 
   const [showNewBookModal, setShowNewBookModal] = useState(false)
@@ -59,18 +57,9 @@ export default function BooksListPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Book Composer</h1>
-            <p className="text-sm text-gray-600 mt-1">{user?.email}</p>
-          </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <h1 className="text-2xl font-bold text-gray-900">Book Composer</h1>
+          <p className="text-sm text-gray-600 mt-1">Development Mode - No Auth</p>
         </div>
       </header>
 

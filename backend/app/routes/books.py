@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from uuid import UUID
 
-from ..core import get_db, get_current_user
+from ..core import get_db, get_current_user_dev
 from ..models import User
 from ..services import BookService
 from ..schemas import (
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/api/books", tags=["books"])
 async def create_book(
     book_data: BookCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Create a new book"""
     service = BookService(db)
@@ -44,7 +44,7 @@ async def create_book(
 @router.get("", response_model=List[BookListResponse])
 async def list_books(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """List all user's books"""
     service = BookService(db)
@@ -56,7 +56,7 @@ async def list_books(
 async def get_book(
     book_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Get a single book with all chapters and parts"""
     service = BookService(db)
@@ -76,7 +76,7 @@ async def update_book(
     book_id: UUID,
     book_data: BookUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Update book metadata"""
     service = BookService(db)
@@ -91,7 +91,7 @@ async def update_book(
 async def delete_book(
     book_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Delete a book"""
     service = BookService(db)
@@ -105,7 +105,7 @@ async def create_chapter(
     book_id: UUID,
     chapter_data: ChapterCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Create a new chapter"""
     service = BookService(db)
@@ -117,7 +117,7 @@ async def create_chapter(
 async def list_chapters(
     book_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """List all chapters for a book"""
     service = BookService(db)
@@ -129,7 +129,7 @@ async def list_chapters(
 async def get_chapter(
     chapter_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Get a single chapter"""
     service = BookService(db)
@@ -152,7 +152,7 @@ async def update_chapter(
     chapter_id: UUID,
     chapter_data: ChapterUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Update chapter content"""
     service = BookService(db)
@@ -164,7 +164,7 @@ async def update_chapter(
 async def delete_chapter(
     chapter_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Delete a chapter"""
     service = BookService(db)
@@ -176,7 +176,7 @@ async def move_chapter(
     chapter_id: UUID,
     move_data: ChapterMove,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Reorder a chapter"""
     service = BookService(db)
@@ -191,7 +191,7 @@ async def create_part(
     book_id: UUID,
     part_data: PartCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Create a new part"""
     service = BookService(db)
@@ -206,7 +206,7 @@ async def create_part(
 async def list_parts(
     book_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """List all parts for a book"""
     service = BookService(db)
@@ -219,7 +219,7 @@ async def update_part(
     part_id: UUID,
     part_data: PartUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Update a part"""
     service = BookService(db)
@@ -234,7 +234,7 @@ async def update_part(
 async def delete_part(
     part_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Delete a part"""
     service = BookService(db)
@@ -246,7 +246,7 @@ async def move_part(
     part_id: UUID,
     move_data: PartMove,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_dev)
 ):
     """Reorder a part"""
     service = BookService(db)

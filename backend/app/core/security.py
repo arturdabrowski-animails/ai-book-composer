@@ -82,3 +82,27 @@ async def get_current_user(
         raise credentials_exception
 
     return user
+
+
+async def get_current_user_dev(
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    """Get or create a default development user (no auth required)"""
+
+    # Look for existing dev user
+    result = await db.execute(
+        select(User).where(User.email == "dev@bookcomposer.local")
+    )
+    user = result.scalar_one_or_none()
+
+    # Create dev user if doesn't exist
+    if user is None:
+        user = User(
+            email="dev@bookcomposer.local",
+            password_hash=get_password_hash("dev123")
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    return user
