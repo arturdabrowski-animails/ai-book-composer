@@ -121,7 +121,7 @@ class BookResponse(BaseModel):
     publisher: Optional[str]
     isbn: Optional[str]
     genre: Optional[str]
-    metadata: Dict[str, Any] = {}
+    book_metadata: Dict[str, Any] = {}
     created_at: datetime
     updated_at: datetime
     parts: List[PartResponse] = []

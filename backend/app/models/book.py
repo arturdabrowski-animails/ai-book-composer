@@ -23,7 +23,7 @@ class Book(Base):
     isbn = Column(String(20))
     genre = Column(String(100))
 
-    metadata = Column(JSONB, default={})
+    book_metadata = Column("metadata", JSONB, default={})
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
