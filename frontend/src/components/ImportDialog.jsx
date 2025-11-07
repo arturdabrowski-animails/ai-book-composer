@@ -35,14 +35,23 @@ export default function ImportDialog({ isOpen, onClose, onImport }) {
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.detail || 'Import failed')
+        // Try to parse JSON error, fallback to text
+        let errorMessage = 'Import failed'
+        try {
+          const data = await response.json()
+          errorMessage = data.detail || errorMessage
+        } catch {
+          const text = await response.text()
+          errorMessage = text || `Server error (${response.status})`
+        }
+        throw new Error(errorMessage)
       }
 
       const book = await response.json()
       onImport(book)
       onClose()
     } catch (err) {
+      console.error('Import error:', err)
       setError(err.message)
     } finally {
       setIsImporting(false)

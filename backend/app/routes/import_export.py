@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 import tempfile
 import os
+import logging
+import traceback
 from ebooklib import epub
 
 from ..core import get_db, get_current_user_dev
@@ -15,6 +17,7 @@ from ..services.book_service import BookService
 from ..schemas import BookCreate, ChapterCreate, ExportOptions
 
 router = APIRouter(prefix="/api", tags=["import-export"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/import/epub")
@@ -28,33 +31,49 @@ async def import_epub(
 
     Returns the created book with all chapters.
     """
-    # Validate file
-    if not file.filename.endswith('.epub'):
-        raise HTTPException(400, "File must be .epub format")
-
-    # Read file
-    content = await file.read()
-
-    # Import EPUB
-    importer = EPUBImporter()
     try:
-        data = importer.import_file(content)
+        # Validate file
+        if not file.filename.endswith('.epub'):
+            raise HTTPException(400, "File must be .epub format")
+
+        logger.info(f"Importing EPUB file: {file.filename}")
+
+        # Read file
+        content = await file.read()
+        logger.info(f"File size: {len(content)} bytes")
+
+        # Import EPUB
+        importer = EPUBImporter()
+        try:
+            data = importer.import_file(content)
+            logger.info(f"Parsed EPUB: {data['metadata'].get('title', 'Unknown')}")
+        except Exception as e:
+            logger.error(f"Failed to parse EPUB: {str(e)}\n{traceback.format_exc()}")
+            raise HTTPException(400, f"Failed to parse EPUB: {str(e)}")
+
+        # Create book
+        book_service = BookService(db)
+
+        book_data = BookCreate(**data['metadata'])
+        book = await book_service.create_book(current_user.id, book_data)
+        logger.info(f"Created book: {book.id}")
+
+        # Create chapters
+        for idx, chapter_data in enumerate(data['chapters']):
+            chapter = ChapterCreate(**chapter_data)
+            await book_service.create_chapter(book.id, current_user.id, chapter)
+            logger.debug(f"Created chapter {idx + 1}/{len(data['chapters'])}")
+
+        # Return complete book
+        result = await book_service.get_book(book.id, current_user.id)
+        logger.info(f"Import completed successfully: {book.id}")
+        return result
+
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(400, f"Failed to parse EPUB: {str(e)}")
-
-    # Create book
-    book_service = BookService(db)
-
-    book_data = BookCreate(**data['metadata'])
-    book = await book_service.create_book(current_user.id, book_data)
-
-    # Create chapters
-    for chapter_data in data['chapters']:
-        chapter = ChapterCreate(**chapter_data)
-        await book_service.create_chapter(book.id, current_user.id, chapter)
-
-    # Return complete book
-    return await book_service.get_book(book.id, current_user.id)
+        logger.error(f"Unexpected error during import: {str(e)}\n{traceback.format_exc()}")
+        raise HTTPException(500, f"Import failed: {str(e)}")
 
 
 @router.post("/books/{book_id}/export/epub")
@@ -66,33 +85,43 @@ async def export_epub(
     background_tasks: BackgroundTasks = BackgroundTasks()
 ):
     """Export book as EPUB"""
-    # Get book with chapters
-    book_service = BookService(db)
-    book = await book_service.get_book(book_id, current_user.id)
+    try:
+        logger.info(f"Exporting book {book_id} as EPUB")
 
-    if not book:
-        raise HTTPException(404, "Book not found")
+        # Get book with chapters
+        book_service = BookService(db)
+        book = await book_service.get_book(book_id, current_user.id)
 
-    # Build EPUB
-    builder = EPUBBuilder()
-    epub_book = builder.build_from_book(book, options)
+        if not book:
+            raise HTTPException(404, "Book not found")
 
-    # Write to temp file
-    with tempfile.NamedTemporaryFile(suffix='.epub', delete=False) as tmp:
-        epub.write_epub(tmp.name, epub_book)
-        tmp_path = tmp.name
+        # Build EPUB
+        builder = EPUBBuilder()
+        epub_book = builder.build_from_book(book, options)
 
-    # Schedule cleanup
-    background_tasks.add_task(os.unlink, tmp_path)
+        # Write to temp file
+        with tempfile.NamedTemporaryFile(suffix='.epub', delete=False) as tmp:
+            epub.write_epub(tmp.name, epub_book)
+            tmp_path = tmp.name
 
-    # Return file
-    filename = f"{book.title.replace(' ', '_')}.epub"
+        # Schedule cleanup
+        background_tasks.add_task(os.unlink, tmp_path)
 
-    return FileResponse(
-        path=tmp_path,
-        media_type='application/epub+zip',
-        filename=filename
-    )
+        # Return file
+        filename = f"{book.title.replace(' ', '_')}.epub"
+        logger.info(f"EPUB export successful: {filename}")
+
+        return FileResponse(
+            path=tmp_path,
+            media_type='application/epub+zip',
+            filename=filename
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to export EPUB: {str(e)}\n{traceback.format_exc()}")
+        raise HTTPException(500, f"Export failed: {str(e)}")
 
 
 @router.post("/books/{book_id}/export/pdf")
@@ -104,28 +133,38 @@ async def export_pdf(
     background_tasks: BackgroundTasks = BackgroundTasks()
 ):
     """Export book as PDF"""
-    book_service = BookService(db)
-    book = await book_service.get_book(book_id, current_user.id)
+    try:
+        logger.info(f"Exporting book {book_id} as PDF")
 
-    if not book:
-        raise HTTPException(404, "Book not found")
+        book_service = BookService(db)
+        book = await book_service.get_book(book_id, current_user.id)
 
-    # Generate PDF
-    exporter = PDFExporter()
-    pdf_bytes = exporter.export(book, options)
+        if not book:
+            raise HTTPException(404, "Book not found")
 
-    # Save to temp file and return
-    with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
-        tmp.write(pdf_bytes)
-        tmp_path = tmp.name
+        # Generate PDF
+        exporter = PDFExporter()
+        pdf_bytes = exporter.export(book, options)
 
-    # Schedule cleanup
-    background_tasks.add_task(os.unlink, tmp_path)
+        # Save to temp file and return
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+            tmp.write(pdf_bytes)
+            tmp_path = tmp.name
 
-    filename = f"{book.title.replace(' ', '_')}.pdf"
+        # Schedule cleanup
+        background_tasks.add_task(os.unlink, tmp_path)
 
-    return FileResponse(
-        path=tmp_path,
-        media_type='application/pdf',
-        filename=filename
-    )
+        filename = f"{book.title.replace(' ', '_')}.pdf"
+        logger.info(f"PDF export successful: {filename}")
+
+        return FileResponse(
+            path=tmp_path,
+            media_type='application/pdf',
+            filename=filename
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to export PDF: {str(e)}\n{traceback.format_exc()}")
+        raise HTTPException(500, f"Export failed: {str(e)}")

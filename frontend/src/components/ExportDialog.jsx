@@ -29,8 +29,16 @@ export default function ExportDialog({ book, isOpen, onClose }) {
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.detail || 'Export failed')
+        // Try to parse JSON error, fallback to text
+        let errorMessage = 'Export failed'
+        try {
+          const data = await response.json()
+          errorMessage = data.detail || errorMessage
+        } catch {
+          const text = await response.text()
+          errorMessage = text || `Server error (${response.status})`
+        }
+        throw new Error(errorMessage)
       }
 
       // Download file
@@ -46,6 +54,7 @@ export default function ExportDialog({ book, isOpen, onClose }) {
 
       onClose()
     } catch (err) {
+      console.error('Export error:', err)
       setError(err.message)
     } finally {
       setIsExporting(false)
