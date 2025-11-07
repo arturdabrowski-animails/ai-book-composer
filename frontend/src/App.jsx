@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import BooksListPage from './pages/BooksListPage'
 import EditorPage from './pages/EditorPage'
+import { getApiUrl } from './config'
 
 function App() {
   // Authentication disabled for development
@@ -10,7 +11,7 @@ function App() {
 
   useEffect(() => {
     // Check API version on mount
-    fetch('/api/version')
+    fetch(getApiUrl('/api/version'))
       .then(res => res.json())
       .then(data => setApiVersion(`API: ${data.version}`))
       .catch(() => setApiVersion('API: offline'))

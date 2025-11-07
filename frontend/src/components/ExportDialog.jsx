@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Download, X, AlertCircle } from 'lucide-react'
+import { getApiUrl } from '../config'
 
 export default function ExportDialog({ book, isOpen, onClose }) {
   const [format, setFormat] = useState('epub')
@@ -20,7 +21,7 @@ export default function ExportDialog({ book, isOpen, onClose }) {
     setError(null)
 
     try {
-      const response = await fetch(`/api/books/${book.id}/export/${format}`, {
+      const response = await fetch(getApiUrl(`/api/books/${book.id}/export/${format}`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

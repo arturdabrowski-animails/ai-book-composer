@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Upload, X, AlertCircle } from 'lucide-react'
+import { getApiUrl } from '../config'
 
 export default function ImportDialog({ isOpen, onClose, onImport }) {
   const [file, setFile] = useState(null)
@@ -29,7 +30,7 @@ export default function ImportDialog({ isOpen, onClose, onImport }) {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await fetch('/api/import/epub', {
+      const response = await fetch(getApiUrl('/api/import/epub'), {
         method: 'POST',
         body: formData
       })
