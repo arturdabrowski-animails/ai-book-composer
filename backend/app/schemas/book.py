@@ -129,3 +129,14 @@ class BookResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ====== Export Options ======
+
+class ExportOptions(BaseModel):
+    """Options for book export"""
+    include_title_page: bool = True
+    include_copyright_page: bool = True
+    include_toc: bool = True
+    number_chapters: bool = True
+    chapter_prefix: str = "Chapter"

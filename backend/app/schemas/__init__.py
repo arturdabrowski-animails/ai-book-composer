@@ -11,7 +11,8 @@ from .book import (
     PartCreate,
     PartUpdate,
     PartResponse,
-    PartMove
+    PartMove,
+    ExportOptions
 )
 
 __all__ = [
@@ -31,4 +32,5 @@ __all__ = [
     "PartUpdate",
     "PartResponse",
     "PartMove",
+    "ExportOptions",
 ]

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import settings
 from .routes import auth_router, books_router
+from .routes import import_export
 
 # Create FastAPI app
 app = FastAPI(
@@ -24,6 +25,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router)
 app.include_router(books_router)
+app.include_router(import_export.router)
 
 
 @app.get("/")
