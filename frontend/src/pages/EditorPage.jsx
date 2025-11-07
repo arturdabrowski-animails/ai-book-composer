@@ -4,7 +4,8 @@ import { useBookStore } from '../stores/bookStore'
 import ChaptersPanel from '../components/ChaptersPanel'
 import EditorPane from '../components/EditorPane'
 import PreviewPane from '../components/PreviewPane'
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import ExportDialog from '../components/ExportDialog'
+import { ArrowLeft, Eye, EyeOff, Download } from 'lucide-react'
 
 export default function EditorPage() {
   const { bookId } = useParams()
@@ -19,6 +20,7 @@ export default function EditorPage() {
   } = useBookStore()
 
   const [showPreview, setShowPreview] = useState(false)
+  const [showExportDialog, setShowExportDialog] = useState(false)
 
   useEffect(() => {
     if (bookId) {
@@ -71,6 +73,13 @@ export default function EditorPage() {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowExportDialog(true)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+          <button
             onClick={() => setShowPreview(!showPreview)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
               showPreview
@@ -112,6 +121,13 @@ export default function EditorPage() {
           </div>
         )}
       </div>
+
+      {/* Export Dialog */}
+      <ExportDialog
+        book={currentBook}
+        isOpen={showExportDialog}
+        onClose={() => setShowExportDialog(false)}
+      />
     </div>
   )
 }

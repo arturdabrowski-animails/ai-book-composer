@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBookStore } from '../stores/bookStore'
-import { BookOpen, Plus, Trash2 } from 'lucide-react'
+import { BookOpen, Plus, Trash2, Upload } from 'lucide-react'
+import ImportDialog from '../components/ImportDialog'
 
 export default function BooksListPage() {
   const navigate = useNavigate()
   const { books, loadBooks, createBook, deleteBook, loading } = useBookStore()
 
   const [showNewBookModal, setShowNewBookModal] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
   const [newBookData, setNewBookData] = useState({
     title: '',
     author: '',
     language: 'en',
   })
+
+  const handleImport = (book) => {
+    loadBooks() // Refresh list
+    navigate(`/books/${book.id}`)
+  }
 
   useEffect(() => {
     loadBooks()
@@ -67,13 +74,22 @@ export default function BooksListPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900">My Books</h2>
-          <button
-            onClick={() => setShowNewBookModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            New Book
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowImportDialog(true)}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              Import EPUB
+            </button>
+            <button
+              onClick={() => setShowNewBookModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              New Book
+            </button>
+          </div>
         </div>
 
         {/* Books Grid */}
@@ -214,6 +230,13 @@ export default function BooksListPage() {
           </div>
         </div>
       )}
+
+      {/* Import Dialog */}
+      <ImportDialog
+        isOpen={showImportDialog}
+        onClose={() => setShowImportDialog(false)}
+        onImport={handleImport}
+      />
     </div>
   )
 }
